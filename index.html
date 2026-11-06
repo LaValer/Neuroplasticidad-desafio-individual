@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neuroplasticidad y aprendizaje: Heun vs RK4 | Mamani Cerezo Laura Valeria</title>
+<style>
+body{font-family:system-ui,Arial,sans-serif;margin:0;background:#f0f9f6;color:#13262a;line-height:1.5}
+header{background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;padding:20px 16px}
+header h1{margin:0 0 4px;font-size:1.5rem}
+main{max-width:980px;margin:auto;padding:12px 16px 40px}
+section{background:#fff;border-radius:10px;padding:16px;margin:14px 0;box-shadow:0 1px 4px #0001}
+h2{margin-top:0;font-size:1.15rem;color:#0f766e}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+label{font-size:.85rem;font-weight:600;display:block}
+input{width:100%;box-sizing:border-box;padding:7px;border:1px solid #a9cfc6;border-radius:6px;font-size:1rem}
+button{margin-top:14px;padding:10px 22px;background:#0f766e;color:#fff;border:0;border-radius:8px;font-size:1rem;cursor:pointer}
+button:hover{background:#0b5a54}
+.eq{font-family:Cambria,Georgia,serif;font-size:1.1rem;background:#e3f4ef;padding:8px 12px;border-radius:6px;margin:6px 0}
+#err{color:#b00020;font-weight:600;margin-top:10px;white-space:pre-line}
+canvas{width:100%;height:auto;border:1px solid #c4e0d8;border-radius:6px;background:#fff}
+.scroll{overflow-x:auto;max-height:340px;overflow-y:auto}
+table{border-collapse:collapse;width:100%;font-size:.8rem}
+th,td{border:1px solid #c4e0d8;padding:4px 6px;text-align:right;white-space:nowrap}
+th{background:#e3f4ef;position:sticky;top:0}
+.note{font-size:.85rem;color:#3f5f59}
+</style>
+</head>
+<body>
+<header>
+<h1>Neuroplasticidad y aprendizaje: ¿cuántas semanas de práctica necesito?</h1>
+<div>Desafío individual · Métodos Numéricos · EDO de primer orden · Heun y Runge-Kutta 4</div>
+<div style="margin-top:6px;font-weight:600">Estudiante: Mamani Cerezo Laura Valeria</div>
+</header>
+<main>
+
+<section>
+<h2>1. Problema y contexto</h2>
+<p><b>Comunidad beneficiaria:</b> estudiantes universitarios que quieren dominar un tema nuevo (por ejemplo, métodos numéricos). La neuroplasticidad es la capacidad del cerebro de fortalecer conexiones neuronales con la práctica repetida: al inicio se progresa rápido y, cerca del dominio total, cada vez más lento.</p>
+<p><b>Pregunta:</b> ¿cuántas semanas de práctica constante se necesitan para alcanzar la meta de dominio (por ejemplo 80 %), y qué tan bien la calculan los métodos de Heun y RK4?</p>
+<p class="note">Los parámetros son <b>hipotéticos</b>. Esta simulación ilustra un modelo y no es una predicción comprobada con datos reales.</p>
+</section>
+
+<section>
+<h2>2. Modelo matemático</h2>
+<p><b>Variable dependiente:</b> y(t) = nivel de dominio del tema (% ). <b>Variable independiente:</b> t = tiempo (semanas).<br>
+<b>Parámetros:</b> M = dominio máximo (%), r = tasa de aprendizaje (1/semana), y₀ = dominio inicial (%).</p>
+<div class="eq">dy/dt = r·(M − y), &nbsp; y(0) = y₀</div>
+<p>Justificación: la velocidad de aprendizaje es proporcional a lo que aún falta por aprender (M − y). Supuestos: práctica constante cada semana, r constante, el dominio nunca supera M.</p>
+<p><b>Solución analítica</b> (separación de variables: ∫dy/(M−y) = ∫r dt → −ln|M−y| = rt + C):</p>
+<div class="eq">y(t) = M − (M − y₀)·e<sup>−r·t</sup></div>
+<p><b>Verificación:</b> y(0) = M − (M − y₀) = y₀ ✔. Derivando: y′(t) = r·(M − y₀)·e<sup>−rt</sup> = r·(M − y(t)) ✔.<br>
+<b>Tiempo para llegar a la meta Y*:</b> t* = ln((M − y₀)/(M − Y*)) / r.</p>
+<p><b>Heun (RK2):</b> k₁ = f(yₙ); k₂ = f(yₙ + h·k₁); yₙ₊₁ = yₙ + (h/2)(k₁ + k₂).<br>
+<b>RK4:</b> k₁ = f(yₙ); k₂ = f(yₙ + h·k₁/2); k₃ = f(yₙ + h·k₂/2); k₄ = f(yₙ + h·k₃); yₙ₊₁ = yₙ + (h/6)(k₁ + 2k₂ + 2k₃ + k₄), con f(y) = r·(M − y).</p>
+</section>
+
+<section>
+<h2>3. Simulación</h2>
+<div class="grid">
+<div><label>Dominio inicial y₀ (%)<input id="y0" type="number" step="any" value="20"></label></div>
+<div><label>Dominio máximo M (%)<input id="M" type="number" step="any" value="100"></label></div>
+<div><label>Tasa r (1/semana)<input id="r" type="number" step="any" value="0.25"></label></div>
+<div><label>Tamaño de paso h (semanas)<input id="h" type="number" step="any" value="1"></label></div>
+<div><label>Tiempo de simulación T (semanas)<input id="T" type="number" step="any" value="12"></label></div>
+<div><label>Meta de dominio Y* (%)<input id="goal" type="number" step="any" value="80"></label></div>
+</div>
+<button onclick="run()">Ejecutar Heun y RK4</button>
+<div id="err"></div>
+</section>
+
+<section id="out" style="display:none">
+<h2>4. Resultados</h2>
+<h3>Gráfica: solución analítica, Heun y RK4</h3>
+<canvas id="c1" width="860" height="380"></canvas>
+<h3>Gráfica de errores absolutos</h3>
+<canvas id="c2" width="860" height="300"></canvas>
+<h3>Comparación de tamaños de paso (error absoluto en t final)</h3>
+<div class="scroll"><table id="cmp"></table></div>
+<h3>Tabla por pasos</h3>
+<div class="scroll"><table id="tbl"></table></div>
+<h3>Interpretación</h3>
+<div id="interp"></div>
+</section>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function simulate(y0,M,r,h,T){
+  const f=y=>r*(M-y), ex=t=>M-(M-y0)*Math.exp(-r*t);
+  const n=Math.floor(T/h+1e-9);
+  const t=[0],e=[y0],he=[y0],rk=[y0];
+  let yh=y0,yr=y0;
+  for(let i=1;i<=n;i++){
+    const k1=f(yh),k2=f(yh+h*k1); yh+=h/2*(k1+k2);
+    const a=f(yr),b=f(yr+h*a/2),c=f(yr+h*b/2),d=f(yr+h*c); yr+=h/6*(a+2*b+2*c+d);
+    t.push(i*h);e.push(ex(i*h));he.push(yh);rk.push(yr);
+  }
+  return {t,e,he,rk,n};
+}
+function plot(cv,xs,series,xl,yl,hline){
+  const g=cv.getContext('2d'),W=cv.width,H=cv.height,L=60,R=15,Tp=15,B=45;
+  g.clearRect(0,0,W,H);
+  let ymin=Infinity,ymax=-Infinity;
+  series.forEach(s=>s.d.forEach(v=>{ymin=Math.min(ymin,v);ymax=Math.max(ymax,v)}));
+  if(hline!==undefined){ymin=Math.min(ymin,hline);ymax=Math.max(ymax,hline)}
+  if(ymax===ymin){ymax+=1;ymin-=1}
+  const pad=(ymax-ymin)*0.05;ymin-=pad;ymax+=pad;
+  const x0=xs[0],x1=xs[xs.length-1]||1;
+  const X=v=>L+(v-x0)/(x1-x0||1)*(W-L-R), Y=v=>H-B-(v-ymin)/(ymax-ymin)*(H-B-Tp);
+  g.font='12px sans-serif';g.fillStyle='#333';g.strokeStyle='#d9ece6';g.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const yv=ymin+(ymax-ymin)*i/5,xv=x0+(x1-x0)*i/5;
+    g.beginPath();g.moveTo(L,Y(yv));g.lineTo(W-R,Y(yv));g.stroke();
+    g.textAlign='right';g.fillText(yv.toPrecision(3),L-5,Y(yv)+4);
+    g.textAlign='center';g.fillText(xv.toFixed(2),X(xv),H-B+16);
+  }
+  g.fillText(xl,(L+W-R)/2,H-8);
+  g.save();g.translate(14,(Tp+H-B)/2);g.rotate(-Math.PI/2);g.fillText(yl,0,0);g.restore();
+  if(hline!==undefined){g.strokeStyle='#999';g.setLineDash([3,4]);g.beginPath();g.moveTo(L,Y(hline));g.lineTo(W-R,Y(hline));g.stroke();g.setLineDash([])}
+  series.forEach((s,k)=>{
+    g.strokeStyle=s.c;g.lineWidth=2;g.setLineDash(s.dash||[]);g.beginPath();
+    s.d.forEach((v,i)=>{i?g.lineTo(X(xs[i]),Y(v)):g.moveTo(X(xs[i]),Y(v))});g.stroke();
+    if(xs.length<=60){g.setLineDash([]);g.fillStyle=s.c;s.d.forEach((v,i)=>{g.beginPath();g.arc(X(xs[i]),Y(v),2.5,0,7);g.fill()})}
+    g.setLineDash([]);g.fillStyle=s.c;g.textAlign='left';g.fillText('■ '+s.n,L+10+k*190,Tp+12);
+  });
+}
+function run(){
+  const y0=+$('y0').value,M=+$('M').value,r=+$('r').value,h=+$('h').value,T=+$('T').value,goal=+$('goal').value;
+  const errs=[];
+  [y0,M,r,h,T,goal].forEach((v,i)=>{ if(!isFinite(v)||$(['y0','M','r','h','T','goal'][i]).value==='') errs.push('Todos los campos deben ser números válidos.') });
+  if(!errs.length){
+    if(!(M>0)) errs.push('M debe ser mayor que 0.');
+    if(!(y0>=0&&y0<M)) errs.push('Debe cumplirse 0 ≤ y₀ < M.');
+    if(!(r>0)) errs.push('r debe ser mayor que 0 (1/semana).');
+    if(!(T>0)) errs.push('T debe ser mayor que 0 (semanas).');
+    if(!(h>0)) errs.push('h debe ser mayor que 0 (semanas).');
+    else if(h>T) errs.push('h no puede ser mayor que T.');
+    else if(T/h>2000) errs.push('Demasiados pasos (T/h máximo 2000). Aumenta h.');
+    if(!(goal>y0&&goal<M)) errs.push('La meta Y* debe cumplir y₀ < Y* < M.');
+  }
+  $('err').textContent=[...new Set(errs)].join('\n');
+  if(errs.length){$('out').style.display='none';return}
+  $('out').style.display='block';
+  const s=simulate(y0,M,r,h,T),ex=t=>M-(M-y0)*Math.exp(-r*t);
+  plot($('c1'),s.t,[{n:'Analítica',d:s.e,c:'#111'},{n:'Heun',d:s.he,c:'#d9480f',dash:[6,4]},{n:'RK4',d:s.rk,c:'#7c3aed'}],'t (semanas)','Dominio y (%)',goal);
+  const eh=s.he.map((v,i)=>Math.abs(v-s.e[i])),er=s.rk.map((v,i)=>Math.abs(v-s.e[i]));
+  plot($('c2'),s.t,[{n:'Error Heun',d:eh,c:'#d9480f'},{n:'Error RK4',d:er,c:'#7c3aed'}],'t (semanas)','Error absoluto (% de dominio)');
+  const rel=(a,b)=>b===0?'—':(Math.abs(a-b)/Math.abs(b)*100).toExponential(3);
+  let html='<tr><th>n</th><th>t (sem)</th><th>Analítica</th><th>Heun</th><th>RK4</th><th>Err abs Heun</th><th>Err abs RK4</th><th>Err rel % Heun</th><th>Err rel % RK4</th></tr>';
+  s.t.forEach((t,i)=>{html+=`<tr><td>${i}</td><td>${t.toFixed(3)}</td><td>${s.e[i].toFixed(6)}</td><td>${s.he[i].toFixed(6)}</td><td>${s.rk[i].toFixed(6)}</td><td>${eh[i].toExponential(3)}</td><td>${er[i].toExponential(3)}</td><td>${rel(s.he[i],s.e[i])}</td><td>${rel(s.rk[i],s.e[i])}</td></tr>`});
+  $('tbl').innerHTML=html;
+  let c='<tr><th>h (sem)</th><th>Pasos</th><th>t final</th><th>Err abs Heun</th><th>Err abs RK4</th><th>Err rel % Heun</th><th>Err rel % RK4</th></tr>';
+  [2*h,h,h/2].forEach(hh=>{
+    if(hh>T||T/hh>20000)return;
+    const q=simulate(y0,M,r,hh,T),k=q.n,ee=q.e[k];
+    c+=`<tr><td>${hh}</td><td>${k}</td><td>${q.t[k].toFixed(3)}</td><td>${Math.abs(q.he[k]-ee).toExponential(3)}</td><td>${Math.abs(q.rk[k]-ee).toExponential(3)}</td><td>${rel(q.he[k],ee)}</td><td>${rel(q.rk[k],ee)}</td></tr>`;
+  });
+  $('cmp').innerHTML=c;
+  const ts=Math.log((M-y0)/(M-goal))/r;
+  const m=s.n,maxH=Math.max(...eh),maxR=Math.max(...er);
+  const win=maxR<maxH?'RK4':(maxH<maxR?'Heun':'ambos por igual');
+  $('interp').innerHTML=`<p>Con y₀ = ${y0} %, M = ${M} %, r = ${r} /semana, un estudiante llegaría al <b>${goal} %</b> de dominio en aproximadamente <b>${ts.toFixed(2)} semanas</b> (solución analítica: t* = ln((M−y₀)/(M−Y*))/r). El aprendizaje es rápido al inicio y se vuelve más lento cerca del máximo, porque cada vez queda menos por aprender.</p>
+  <p>Con h = ${h} semanas, el error absoluto máximo fue ${maxH.toExponential(3)} para Heun y ${maxR.toExponential(3)} para RK4: en este ensayo produjo menor error <b>${win}</b>. Al reducir h, ambos errores bajan (RK4 mucho más rápido, por ser de orden 4 frente al orden 2 de Heun).</p>
+  <p class="note">Limitaciones: el modelo supone práctica constante y una tasa r fija; en la realidad influyen el sueño, la motivación y el tipo de tema. Los valores son hipotéticos y no una predicción comprobada. Para la comunidad, el resultado sugiere planificar cuántas semanas de práctica hacen falta y que repartir el esfuerzo con constancia es clave.</p>`;
+}
+run();
+</script>
+</body>
+</html>
